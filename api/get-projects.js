@@ -11,7 +11,7 @@ module.exports = async function handler(request, response) {
     }
 
     try {
-        const { rows } = await sql`SELECT * FROM projects WHERE username = ${username} ORDER BY created_at ASC`;
+        const { rows } = await sql`SELECT * FROM loxnft_projects WHERE username = ${username} ORDER BY created_at ASC`;
         return response.status(200).json({ success: true, projects: rows });
     } catch (error) {
         console.error(error);

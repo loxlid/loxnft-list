@@ -11,7 +11,7 @@ module.exports = async function handler(request, response) {
     }
 
     try {
-        const { rows } = await sql`SELECT * FROM users WHERE username = ${username}`;
+        const { rows } = await sql`SELECT * FROM loxnft_users WHERE username = ${username}`;
 
         if (rows.length > 0) {
             // User exists, verify password
@@ -23,7 +23,7 @@ module.exports = async function handler(request, response) {
         } else {
             // User does not exist, so register if action is register
             if (action === 'register') {
-                await sql`INSERT INTO users (username, password) VALUES (${username}, ${password})`;
+                await sql`INSERT INTO loxnft_users (username, password) VALUES (${username}, ${password})`;
                 return response.status(200).json({ success: true, message: 'Registration successful' });
             } else {
                 return response.status(404).json({ success: false, error: 'User not found' });

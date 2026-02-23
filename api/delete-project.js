@@ -11,7 +11,7 @@ module.exports = async function handler(request, response) {
     }
 
     try {
-        const { rowCount } = await sql`DELETE FROM projects WHERE id = ${id} AND username = ${username}`;
+        const { rowCount } = await sql`DELETE FROM loxnft_projects WHERE id = ${id} AND username = ${username}`;
         if (rowCount > 0) {
             return response.status(200).json({ success: true, message: 'Project deleted' });
         } else {

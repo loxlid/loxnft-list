@@ -13,7 +13,7 @@ module.exports = async function handler(request, response) {
 
     try {
         const { rows } = await sql`
-      INSERT INTO projects (username, name, twitter, type, mint_date, status)
+      INSERT INTO loxnft_projects (username, name, twitter, type, mint_date, status)
       VALUES (${username}, ${name}, ${twitter}, ${type}, ${mint_date}, ${status})
       RETURNING *;
     `;
