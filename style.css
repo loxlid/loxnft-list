@@ -67,11 +67,25 @@ body {
     margin-bottom: 5px;
 }
 
-.system { color: #888; }
-.info { color: #00ffff; }
-.success { color: var(--text-color); }
-.warning { color: var(--accent-color); }
-.error { color: var(--error-color); }
+.system {
+    color: #888;
+}
+
+.info {
+    color: #00ffff;
+}
+
+.success {
+    color: var(--text-color);
+}
+
+.warning {
+    color: var(--accent-color);
+}
+
+.error {
+    color: var(--error-color);
+}
 
 .nft-card {
     border: 1px dashed var(--text-color);
@@ -151,7 +165,8 @@ body {
     font-size: inherit;
     flex-grow: 1;
     outline: none;
-    caret-color: transparent; /* Create custom cursor */
+    caret-color: transparent;
+    /* Create custom cursor */
 }
 
 #cursor {
@@ -164,20 +179,60 @@ body {
 }
 
 @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
 }
+
 ::-webkit-scrollbar-track {
-    background: var(--bg-color); 
+    background: var(--bg-color);
 }
+
 ::-webkit-scrollbar-thumb {
-    background: #333; 
+    background: #333;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-color); 
+    background: var(--text-color);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    #terminal {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+        padding: 15px;
+    }
+
+    .nft-grid {
+        grid-template-columns: 1fr;
+    }
+
+    table {
+        font-size: 0.8em !important;
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .prompt {
+        font-size: 0.9em;
+    }
 }

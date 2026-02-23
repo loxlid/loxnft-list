@@ -10,13 +10,15 @@ let currentUser = null;
 let isLoggingIn = true;
 let loginStep = 0;
 let tempUsername = '';
+let tempPassword = '';
 
 let isAdding = false;
 let addStep = 0;
 let newProject = {};
 
 // Local Storage Databases
-let usersDB = JSON.parse(localStorage.getItem('loxnft_users')) || {};
+// ONLY session token is kept locally now. Data is fetched from API.
+let activeSession = localStorage.getItem('loxnft_session') || null;
 
 const asciiArt = `
   _      ______   ___   _ ______ _______ 
@@ -78,11 +80,11 @@ function renderNFTTable() {
         let statusColor = p.status.includes('WL') ? '#39ff14' : (p.status.includes('Grinding') ? '#ffb000' : '#888');
         table += `
         <tr>
-            <td style="padding: 5px;">${p.id}</td>
+            <td style="padding: 5px;">#${p.id}</td>
             <td style="padding: 5px; color: #fff;">${p.name}</td>
             <td style="padding: 5px; color: #00ffff;">${p.twitter}</td>
             <td style="padding: 5px;">${p.type}</td>
-            <td style="padding: 5px; color: #aaa;">${p.date}</td>
+            <td style="padding: 5px; color: #aaa;">${p.mint_date || p.date}</td>
             <td style="padding: 5px; color: ${statusColor}; font-weight: bold;">[${p.status}]</td>
         </tr>`;
     });
@@ -104,9 +106,32 @@ async function typeText(text, className = '', speed = 20) {
 
 async function initTerminal() {
     await typeText("Booting LOXOS v1.0...", "system", 30);
-    await typeText("System locked. User authentication required.", "warning", 30);
-    println("");
-    startLoginFlow();
+
+    // Auto-login check
+    if (activeSession) {
+        await typeText("Active session detected. Verifying...", "system", 30);
+
+        try {
+            // Ping database to implicitly verify
+            const res = await fetch(`/api/get-projects?username=${activeSession}`);
+            if (res.ok) {
+                await typeText("Session Validated. Resuming connection...", "success", 10);
+                println("");
+                loginSuccess(activeSession);
+            } else {
+                localStorage.removeItem('loxnft_session');
+                throw new Error("Invalid session");
+            }
+        } catch (e) {
+            await typeText("Session expired. Please log in again.", "warning", 30);
+            println("");
+            startLoginFlow();
+        }
+    } else {
+        await typeText("System locked. User authentication required.", "warning", 30);
+        println("");
+        startLoginFlow();
+    }
 }
 
 function startLoginFlow() {
@@ -130,29 +155,68 @@ function handleLoginProcess(cmd) {
         commandInput.type = "password"; // hide password input
     } else if (loginStep === 1) {
         println(`<span class="prompt" style="color: #00ffff">input:</span> ********`, 'system');
-        commandInput.type = "text"; // restore text input
 
         const password = value;
         if (!password) {
             println('Password cannot be empty.', 'error');
-            commandInput.type = "password"; // re-hide
             return;
         }
 
-        // Check DB
-        if (usersDB[tempUsername]) {
-            if (usersDB[tempUsername] === password) {
-                loginSuccess(tempUsername);
-            } else {
-                println("ERROR: Incorrect password.", "error");
+        // Try to login first
+        fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: tempUsername, password: password, action: 'login' })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    commandInput.type = "text";
+                    loginSuccess(tempUsername);
+                } else if (data.error === 'User not found') {
+                    // New user! Need confirmation
+                    tempPassword = password;
+                    loginStep++;
+                    println(`New user. Please confirm password for '${tempUsername}':`, "warning");
+                    promptSpan.innerHTML = "CONFIRM >";
+                } else {
+                    commandInput.type = "text";
+                    println(`ERROR: ${data.error}`, "error");
+                    startLoginFlow();
+                }
+            })
+            .catch(err => {
+                commandInput.type = "text";
+                println("ERROR: Could not connect to authentication server.", "error");
                 startLoginFlow();
-            }
+            });
+
+    } else if (loginStep === 2) {
+        println(`<span class="prompt" style="color: #00ffff">input:</span> ********`, 'system');
+        commandInput.type = "text"; // restore text input
+
+        const confirmPass = value;
+        if (confirmPass === tempPassword) {
+            println("Registering new account securely...", "system");
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: tempUsername, password: tempPassword, action: 'register' })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        println(`[SYSTEM] New account registered for ${tempUsername}.`, "warning");
+                        loginSuccess(tempUsername);
+                    } else {
+                        println(`ERROR: Registration failed.`, "error");
+                        startLoginFlow();
+                    }
+                });
         } else {
-            // Auto register
-            usersDB[tempUsername] = password;
-            localStorage.setItem('loxnft_users', JSON.stringify(usersDB));
-            println(`[SYSTEM] New account registered for ${tempUsername}.`, "warning");
-            loginSuccess(tempUsername);
+            println("ERROR: Passwords do not match. Registration aborted.", "error");
+            startLoginFlow();
         }
     }
 }
@@ -161,24 +225,30 @@ async function loginSuccess(username) {
     currentUser = username;
     isLoggingIn = false;
 
-    // Load tracking data
-    const savedData = localStorage.getItem(`loxnft_data_${currentUser}`);
-    if (savedData) {
-        projects = JSON.parse(savedData);
-    } else {
-        projects = [];
-    }
+    // Set persistent session
+    localStorage.setItem('loxnft_session', username);
 
     println(`Authentication successful. Welcome, ${username}.`, "success");
-    await typeText(`Loaded ${projects.length} tracked projects from encrypted storage.`, "system", 30);
+    await typeText(`Connecting to Secure Cloud Database...`, "system", 20);
+
+    try {
+        const res = await fetch(`/api/get-projects?username=${username}`);
+        const data = await res.json();
+
+        if (data.success) {
+            projects = data.projects;
+            await typeText(`Loaded ${projects.length} tracked projects from the cloud.`, "system", 20);
+        } else {
+            projects = [];
+            println("Failed to parse cloud data. Starting empty.", "error");
+        }
+    } catch (e) {
+        projects = [];
+        println("Error connecting to database. Starting offline mode.", "error");
+    }
+
     println(`<pre class="info" style="font-size: 0.8em; line-height: 1.2;">${asciiArt}</pre>`);
     promptSpan.innerHTML = `${currentUser}@loxnft:~$`;
-}
-
-function saveData() {
-    if (currentUser) {
-        localStorage.setItem(`loxnft_data_${currentUser}`, JSON.stringify(projects));
-    }
 }
 
 function processCommand(cmd) {
@@ -235,11 +305,24 @@ function processCommand(cmd) {
             } else {
                 const targetId = parseInt(args[1]);
                 const index = projects.findIndex(p => p.id === targetId);
+
                 if (index !== -1) {
                     const deletedName = projects[index].name;
                     projects.splice(index, 1);
-                    saveData(); // Save changes
-                    println(`[SUCCESS] Deleted ${deletedName} from tracking list.`, 'success');
+
+                    // Backend delete
+                    fetch('/api/delete-project', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: targetId, username: currentUser })
+                    }).then(res => res.json()).then(data => {
+                        if (data.success) {
+                            println(`[SUCCESS] Deleted ${deletedName} from tracking list.`, 'success');
+                        } else {
+                            println(`[ERROR] Partially deleted locally, backend error: ${data.error}`, 'error');
+                        }
+                    });
+
                 } else {
                     println(`Error: Project with ID ${targetId} not found.`, 'error');
                 }
@@ -249,6 +332,7 @@ function processCommand(cmd) {
         case 'exit':
             currentUser = null;
             projects = [];
+            localStorage.removeItem('loxnft_session'); // Clear persistent session
             println('Logging out...', 'warning');
             setTimeout(() => {
                 outputDiv.innerHTML = '';
@@ -301,14 +385,34 @@ function handleAddingProcess(cmd) {
             break;
         case 4:
             newProject.status = value || 'Watching';
-            projects.push(newProject);
-            saveData(); // Save changes
-            println(`[SUCCESS] Project ${newProject.name} added to your tracker!`, 'success');
 
-            // Reset state
-            isAdding = false;
-            addStep = 0;
-            promptSpan.innerHTML = `${currentUser}@loxnft:~$`;
+            println("Uploading to secure cloud storage...", "system");
+
+            // Backend Insert
+            fetch('/api/add-project', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: currentUser,
+                    name: newProject.name,
+                    twitter: newProject.twitter,
+                    type: newProject.type,
+                    mint_date: newProject.date,
+                    status: newProject.status
+                })
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    projects.push(data.project); // Push the DB returned object with real ID
+                    println(`[SUCCESS] Project ${newProject.name} added to your tracker!`, 'success');
+                } else {
+                    println(`[ERROR] Failed to save to cloud: ${data.error}`, 'error');
+                }
+
+                // Reset state
+                isAdding = false;
+                addStep = 0;
+                promptSpan.innerHTML = `${currentUser}@loxnft:~$`;
+            });
             break;
     }
 }
