@@ -42,6 +42,10 @@ function println(text, className = '') {
 
 function scrollToBottom() {
     outputDiv.scrollTop = outputDiv.scrollHeight;
+    // ensure the input is always visible if the mobile keyboard pops up
+    setTimeout(() => {
+        document.getElementById('input-line').scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 100);
 }
 
 function renderNFTGrid() {
