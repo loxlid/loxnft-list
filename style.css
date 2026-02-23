@@ -1,0 +1,183 @@
+:root {
+    --bg-color: #0d1117;
+    --text-color: #39ff14;
+    --accent-color: #ffb000;
+    --error-color: #ff3333;
+    --font-main: 'Fira Code', monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-main);
+    font-size: 16px;
+    line-height: 1.6;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#terminal {
+    width: 90vw;
+    height: 90vh;
+    max-width: 1200px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+}
+
+/* CRT Scanline effect */
+#terminal::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+}
+
+#output {
+    flex-grow: 1;
+    overflow-y: auto;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    padding-bottom: 20px;
+}
+
+.output-line {
+    margin-bottom: 5px;
+}
+
+.system { color: #888; }
+.info { color: #00ffff; }
+.success { color: var(--text-color); }
+.warning { color: var(--accent-color); }
+.error { color: var(--error-color); }
+
+.nft-card {
+    border: 1px dashed var(--text-color);
+    padding: 10px;
+    margin: 10px 0;
+    width: fit-content;
+    display: inline-block;
+}
+
+.nft-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.nft-item {
+    border: 1px solid #333;
+    padding: 15px;
+    background: rgba(20, 20, 20, 0.8);
+    transition: all 0.3s ease;
+}
+
+.nft-item:hover {
+    border-color: var(--text-color);
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+    transform: translateY(-2px);
+}
+
+.nft-img-placeholder {
+    width: 100%;
+    height: 120px;
+    border: 1px dashed #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    font-size: 12px;
+    color: #888;
+    background: #0a0a0a;
+}
+
+.nft-title {
+    color: var(--accent-color);
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+.nft-price {
+    color: #00ffff;
+    font-weight: 600;
+}
+
+.nft-id {
+    color: #888;
+    font-size: 0.9em;
+}
+
+#input-line {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.prompt {
+    color: var(--accent-color);
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+#command-input {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: inherit;
+    flex-grow: 1;
+    outline: none;
+    caret-color: transparent; /* Create custom cursor */
+}
+
+#cursor {
+    display: inline-block;
+    width: 10px;
+    height: 1.2em;
+    background-color: var(--text-color);
+    animation: blink 1s step-end infinite;
+    margin-left: -5px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-color); 
+}
+::-webkit-scrollbar-thumb {
+    background: #333; 
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-color); 
+}
