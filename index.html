@@ -3,23 +3,51 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LOXNFT - NFT Grind Tracker</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <div id="terminal">
-        <div id="output"></div>
-        <div id="input-line">
-            <span class="prompt">guest@loxnft:~$</span>
-            <input type="text" id="command-input" autocomplete="off" spellcheck="false" autofocus>
-            <span id="cursor"></span>
+    <div id="terminal-app">
+        <!-- Top Status Bar -->
+        <div id="status-bar">
+            <div class="status-left">
+                <span class="status-icon terminal-icon"></span>
+                <span class="status-title">LOXOS v2.0</span>
+            </div>
+            <div class="status-center">
+                <span id="status-message">Awaiting Connection...</span>
+            </div>
+            <div class="status-right">
+                <span id="status-user">guest</span>
+                <span id="status-projects-count">[0] Projects</span>
+                <div id="connection-indicator" class="indicator offline"></div>
+            </div>
+        </div>
+
+        <!-- Main Terminal Area -->
+        <div id="terminal-body">
+            <div id="output"></div>
+        </div>
+
+        <!-- Bottom Input Area -->
+        <div id="input-container">
+            <div id="suggestion-box" class="hidden"></div>
+            <div id="input-line">
+                <span class="prompt" id="prompt-text">guest@loxnft:~$</span>
+                <input type="text" id="command-input" autocomplete="off" spellcheck="false" autofocus>
+                <div id="cursor"></div>
+            </div>
         </div>
     </div>
-    <script src="script.js"></script>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <script type="module" src="./src/main.js"></script>
 </body>
 
 </html>
